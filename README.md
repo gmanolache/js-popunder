@@ -1,7 +1,7 @@
 Javascript Popunder
 =====
-This Javascript class being used to make a popunder easier (avoid blocked by Google Chrome)
-You can make multiple window/tab
+- This Javascript class being used to make a popunder easier (avoid blocked by Google Chrome)
+- You can make multiple window/tab
 
 - Note: The popunders will open all at the same time with Firefox, IE
 But in Google Chrome, i have been try to avoid blocked by Chrome popunder-blocker therefore the popunders will be open in order clicked
