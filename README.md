@@ -7,9 +7,9 @@ You can make multiple window/tab
 But in Google Chrome, i have been try to avoid blocked by Chrome popunder-blocker therefore the popunders will be open in order clicked
 
 
-<script type="text/javascript" src="popup.js"></script>
-<script type="text/javascript">
-Light.Popup.create('site1.com', {onNewTab: true});
-Light.Popup.create('site1.com', {width: 100, height: 100, onNewTab: false});
-Light.Popup.create('site3.com', {alwaysPop: true});
-</script>
+		<script type="text/javascript" src="popup.js"></script>
+		<script type="text/javascript">
+		Light.Popup.create('site1.com', {onNewTab: true});
+		Light.Popup.create('site1.com', {width: 100, height: 100, onNewTab: false});
+		Light.Popup.create('site3.com', {alwaysPop: true});
+		</script>
