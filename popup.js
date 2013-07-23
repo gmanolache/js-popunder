@@ -1,12 +1,12 @@
 /**
  * @author		Phan Thanh Cong <chiplove.9xpro at gmail dot com>
  * @since		June 14, 2012
- * @version		1.2
- * @since		Jul 5, 2013 - Anti Google Chrome Blocker
+ * @version		1.2.1
+ * @since		Jul 23, 2013 - Anti Google Chrome Blocker
 */
 var Light = Light || {};
 Light.Popup = {
-	popName:  'Chip-LightPopup',
+	popName:  'Chip-LightPopup', //new Date().getTime(), 
 	alwaysPop: false, // refresh = new pop
 	onNewTab: true,
 	/**
@@ -71,6 +71,7 @@ Light.Popup = {
 		var execute = function() {
 			if(me.cookie(popName) === null && !executed) {
 				// Jul 5, 2013 - Anti Google Chrome Blocker
+				console.log(navigator.userAgent);
 				if(typeof window.chrome != 'undefined' && navigator.userAgent.indexOf('Windows') != -1
 					&& typeof ___lastPopTime != 'undefined' && ___lastPopTime+5 > new Date().getTime()) {
 					return;
@@ -82,14 +83,18 @@ Light.Popup = {
 					var w = window.open(link, '_blank', params);
 				}
 				w.blur();
+				window.focus();
 				me.cookie(popName, 1, cookieExpires);
 				// Jul 5, 2013 - Anti Google Chrome Blocker
 				___lastPopTime = new Date().getTime();
-				setTimeout(function(){
-					if(!w.innerWidth || !w.document.documentElement.clientWidth) {
-						me.create(link, optionsOriginal);
-					}
-				}, 100);
+				// Jul 23, 2013 - Anti Google Chrome Blocker
+				if(navigator.userAgent.indexOf('Mac OS') != -1 && typeof window.chrome != 'undefined') {
+					setTimeout(function(){
+						if(!w.innerWidth || !w.document.documentElement.clientWidth) {
+							me.create(link, optionsOriginal);
+						}
+					}, 100);
+				}
 			}
 		}
 		if(eventType == 1) {
