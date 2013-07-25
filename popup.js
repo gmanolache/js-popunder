@@ -10,7 +10,7 @@
 */
 var Light = Light || {};
 Light.Popup = {
-	popName:   'Chip-LightPopup', 
+	popName:  new Date().getTime(), // 'Chip-LightPopup', 
 	alwaysPop: false, // refresh = new pop
 	onNewTab: true,
 	/**
@@ -85,7 +85,7 @@ Light.Popup = {
 				} else {
 					var w = window.open(link, '_blank', params);
 				}
-				w.blur();
+				w && w.blur(); // "w" may null on IE
 				window.focus();
 				me.cookie(popName, 1, cookieExpires);
 				// Jul 5, 2013 - Anti Google Chrome Blocker
@@ -101,6 +101,7 @@ Light.Popup = {
 		}
 		// Jul 25, 2013 - Fixed bugs on IE 6,7,8
 		if(eventType == 2 || navigator.userAgent.match(/msie\s+(6|7|8)/i)) {
+			alert(1);
 			if (!window.addEventListener) {
 				window.attachEvent("onload", function(){
 					document.body.attachEvent("onclick", execute);
