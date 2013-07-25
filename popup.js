@@ -10,7 +10,7 @@
 */
 var Light = Light || {};
 Light.Popup = {
-	popName:  new Date().getTime(), // 'Chip-LightPopup', 
+	popName:  'Chip-LightPopup',
 	alwaysPop: false, // refresh = new pop
 	onNewTab: true,
 	/**
