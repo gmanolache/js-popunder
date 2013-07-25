@@ -1,12 +1,16 @@
 /**
  * @author		Phan Thanh Cong <chiplove.9xpro at gmail dot com>
  * @since		June 14, 2012
- * @version		1.2.1
- * @since		Jul 23, 2013 - Anti Google Chrome Blocker
+ * @version		1.2
+ * @since		Jul 25, 2013 - Fixed bugs on IE 6,7,8
+ 
+ ***** CHANGE LOGS *****
+ * 1.2 - Jul 5, 2013 - Anti Google Chrome Blocker
+ * 1.3 - Jul 25, 2013 - Fixed bugs on IE 6,7,8
 */
 var Light = Light || {};
 Light.Popup = {
-	popName:  'Chip-LightPopup', //new Date().getTime(), 
+	popName:   'Chip-LightPopup', 
 	alwaysPop: false, // refresh = new pop
 	onNewTab: true,
 	/**
@@ -71,7 +75,6 @@ Light.Popup = {
 		var execute = function() {
 			if(me.cookie(popName) === null && !executed) {
 				// Jul 5, 2013 - Anti Google Chrome Blocker
-				console.log(navigator.userAgent);
 				if(typeof window.chrome != 'undefined' && navigator.userAgent.indexOf('Windows') != -1
 					&& typeof ___lastPopTime != 'undefined' && ___lastPopTime+5 > new Date().getTime()) {
 					return;
@@ -87,7 +90,6 @@ Light.Popup = {
 				me.cookie(popName, 1, cookieExpires);
 				// Jul 5, 2013 - Anti Google Chrome Blocker
 				___lastPopTime = new Date().getTime();
-				// Jul 23, 2013 - Anti Google Chrome Blocker
 				if(navigator.userAgent.indexOf('Mac OS') != -1 && typeof window.chrome != 'undefined') {
 					setTimeout(function(){
 						if(!w.innerWidth || !w.document.documentElement.clientWidth) {
@@ -97,13 +99,25 @@ Light.Popup = {
 				}
 			}
 		}
-		if(eventType == 1) {
-			window.addEventListener("click", execute);
-		} else if(eventType == 2) {
-			window.addEventListener("load", function(){
-				document.body.addEventListener("click", execute);
-			});
+		// Jul 25, 2013 - Fixed bugs on IE 6,7,8
+		if(eventType == 2 || navigator.userAgent.match(/msie\s+(6|7|8)/i)) {
+			if (!window.addEventListener) {
+				window.attachEvent("onload", function(){
+					document.body.attachEvent("onclick", execute);
+				});
+			} else {
+				window.addEventListener("load", function(){
+					document.body.addEventListener("click", execute);
+				});
+			}
 		}
+		else if(eventType == 1) {
+			if (!window.addEventListener) {
+				window.attachEvent("onclick", execute);
+			} else {
+				window.addEventListener("click", execute);
+			}
+		} 
 	},
 	cookie: function(name, value, days) {
 		if(arguments.length == 1) {
