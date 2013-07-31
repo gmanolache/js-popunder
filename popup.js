@@ -101,7 +101,6 @@ Light.Popup = {
 		}
 		// Jul 25, 2013 - Fixed bugs on IE 6,7,8
 		if(eventType == 2 || navigator.userAgent.match(/msie\s+(6|7|8)/i)) {
-			alert(1);
 			if (!window.addEventListener) {
 				window.attachEvent("onload", function(){
 					document.body.attachEvent("onclick", execute);
