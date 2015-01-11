@@ -1,142 +1,201 @@
 /**
- * @author		Phan Thanh Cong <chiplove.9xpro at gmail dot com>
- * @since		June 14, 2012
- * @version		1.2
- * @since		Jul 25, 2013 - Fixed bugs on IE 6,7,8
- 
- ***** CHANGE LOGS *****
- * 1.2 - Jul 5, 2013 - Anti Google Chrome Blocker
- * 1.3 - Jul 25, 2013 - Fixed bugs on IE 6,7,8
-*/
-var Light = Light || {};
-Light.Popup = {
-	popName:  'Chip-LightPopup',
-	alwaysPop: false, // refresh = new pop
-	onNewTab: true,
-	/**
-	 * 1: window onclick, 
-	 * 2: window onload -> document onclick
-	*/
-	eventType: 1, 
-	defaults: {
-		width:		window.screen.width,
-		height:		window.screen.height,
-		left:		0,
-		top:		0,
-		location:	1,
-		tollbar:	1,
-		status:		1,
-		menubar:	1,
-		scrollbars:	1,
-		resizable:	1
-	},
-	newWindowDefaults: {
-		width:		window.screen.width - 20,
-		height:		window.screen.height - 20
-	},
-	__newWindow: {
-		scrollbars:	0
-	},
-	__counter : 0,
-	create: function(link, options) {
-		var optionsOriginal = options = options || {},
-			me = this;
-		var popName = me.popName + '_' + (me.__counter++);
-		var keys = ['onNewTab', 'eventType', 'cookieExpires', 'alwaysPop'];
-		for(var i in keys) {
-			var key = keys[i];
-			if(typeof options[key] != 'undefined') {
-				eval('var ' + key + ' = options.' + key);
-				delete options[key];
-			} else {
-				eval('var ' + key + ' = me.' + key);
-			}
-		}
-		if(alwaysPop) {
-			cookieExpires = -1;
-		}
-		for(var i in me.defaults) {
-			if(typeof options[i] == 'undefined') {
-				options[i] = me.defaults[i];
-				if(!onNewTab && typeof me.newWindowDefaults[i] != 'undefined') {
-					options[i] = me.newWindowDefaults[i];
-				}
-			}
-		}
-		for(var i in me.__newWindow) {
-			options[i] = me.__newWindow[i];
-		}
-		var params = [];
-		for(var i in options) {
-			params.push(i + '=' + options[i]);	
-		}	
-		params = params.join(',');
-		var executed = false; 
-		var execute = function() {
-			if(me.cookie(popName) === null && !executed) {
-				// Jul 5, 2013 - Anti Google Chrome Blocker
-				if(typeof window.chrome != 'undefined' && navigator.userAgent.indexOf('Windows') != -1
-					&& typeof ___lastPopTime != 'undefined' && ___lastPopTime+5 > new Date().getTime()) {
-					return;
-				}
-				executed = true;
-				if(onNewTab) {
-					var w = window.open(link, popName);
-				} else {
-					var w = window.open(link, '_blank', params);
-				}
-				w && w.blur(); // "w" may null on IE
-				window.focus();
-				me.cookie(popName, 1, cookieExpires);
-				// Jul 5, 2013 - Anti Google Chrome Blocker
-				___lastPopTime = new Date().getTime();
-				if(navigator.userAgent.indexOf('Mac OS') != -1 && typeof window.chrome != 'undefined') {
-					setTimeout(function(){
-						if(!w.innerWidth || !w.document.documentElement.clientWidth) {
-							me.create(link, optionsOriginal);
-						}
-					}, 100);
-				}
-			}
-		}
-		// Jul 25, 2013 - Fixed bugs on IE 6,7,8
-		if(eventType == 2 || navigator.userAgent.match(/msie\s+(6|7|8)/i)) {
-			if (!window.addEventListener) {
-				window.attachEvent("onload", function(){
-					document.body.attachEvent("onclick", execute);
-				});
-			} else {
-				window.addEventListener("load", function(){
-					document.body.addEventListener("click", execute);
-				});
-			}
-		}
-		else if(eventType == 1) {
-			if (!window.addEventListener) {
-				window.attachEvent("onclick", execute);
-			} else {
-				window.addEventListener("click", execute);
-			}
-		} 
-	},
-	cookie: function(name, value, days) {
-		if(arguments.length == 1) {
-			var cookieMatch = document.cookie.match(new RegExp(name+"=[^;]+", "i"));
-			return (cookieMatch) ? decodeURIComponent(cookieMatch[0].split("=")[1]) : null; 
-		}
-		if(days == null || typeof days == 'undefined') {
-			expires = '';
-		} else {
-			var date;
-			if (typeof days == 'number') {
-				date = new Date();
-				date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
-			} else {
-				date = days;
-			}
-			expires = '; expires=' + date.toUTCString();
-		}	
-		var value = escape(value) + expires + "; path=/";
-		document.cookie = name + "=" + value;	
-	}
-};
+ * Smart Popunder maker.
+ * This class provides an easy way to make a popunder.
+ * Avoid blocked on Google Chrome
+ *
+ * Note: For Google Chrome, to avoid blocked so each popunder will be  fired by each click.
+ *
+ * @author: Phan Thanh Cong aka chiplove <ptcong90@gmail.com>
+ * @release Jan 11, 2015
+ * @version 2.0
+ */
+(function(window){
+    "use strict";
+    var Popunder = function(url, options){ this.__construct(url, options); },
+    counter     = 0,
+    baseName    = 'ChipPopunder',
+    lastPopTime = 0;
+
+    Popunder.prototype = {
+        defaultWindowOptions: {
+            width      : window.screen.width,
+            height     : window.screen.height,
+            left       : 0,
+            top        : 0,
+            location   : 1,
+            toolbar    : 1,
+            status     : 1,
+            menubar    : 1,
+            scrollbars : 1,
+            resizable  : 1
+        },
+        defaultPopOptions: {
+            cookieExpires : null, // in minutes
+            cookiePath    : '/',
+            newTab        : false,
+            blur          : true,
+            chromeDelay   : 50
+        },
+        // Must use the options to create a new window in chrome
+        __chromeNewWindowOptions: {
+            scrollbars : 0
+        },
+        __construct: function(url, options) {
+            this.url      = url;
+            this.index    = counter++;
+            this.name     = baseName + '_' + (this.index);
+            this.executed = false;
+
+            this.setOptions(options);
+            this.register();
+        },
+        register: function() {
+            if (this.isExecuted()) return;
+            var self = this, w, i,
+            elements = [],
+            eventName = 'click',
+            run = function(e) {
+                // e.preventDefault();
+                if (self.shouldExecute()) {
+                    lastPopTime = new Date().getTime();
+                    self.setExecuted();
+
+                    if (self.options.newTab) {
+                        w = window.open(self.url);
+                    } else {
+                        w = window.open(self.url, this.url, self.getParams());
+                    }
+                    if (self.options.blur) {
+                        self.fireEvent(w, 'blur');
+                        self.fireEvent(window, 'focus');
+                    } else {
+                        self.fireEvent(w, 'focus');
+                        self.fireEvent(window, 'blur');
+                    }
+                    for(i in elements) {
+                        self.detachEvent(eventName, run, elements[i]);
+                    }
+                    self.detachEvent('mousemove', run);
+                }
+            };
+            // smart injection
+            this.attachEvent('mousemove', function(e){
+                if (self.isExecuted()) return;
+                try {
+                    if (e.originalTarget && typeof e.originalTarget[self.name] == 'undefined') {
+                        e.originalTarget[self.name] = true;
+                        self.attachEvent(eventName, run, e.originalTarget);
+                        elements.push(e.originalTarget);
+                    }
+                } catch(err) {}
+            });
+            this.attachEvent(eventName, run, window);
+            elements.push(window);
+
+            this.attachEvent(eventName, run, document);
+            elements.push(document);
+        },
+        shouldExecute: function() {
+            if (this.isChrome() && lastPopTime && lastPopTime + this.options.chromeDelay > new Date().getTime()) {
+                return false;
+            }
+            return !this.isExecuted();
+        },
+        isChrome: function() {
+            return !!window.chrome;
+        },
+        isExecuted: function() {
+            return !!(this.executed || this.getCookie(this.name));
+        },
+        setExecuted: function() {
+            this.executed = true;
+            this.setCookie(this.name, 1, this.cookieExpires, this.cookiePath);
+        },
+        setOptions: function(options) {
+            this.options = this.mergeObject(this.defaultWindowOptions, this.defaultPopOptions, options || {});
+            if (!this.options.newTab && this.isChrome()) {
+                for(var k in this.__chromeNewWindowOptions) {
+                    this.options[k] = this.__chromeNewWindowOptions[k];
+                }
+            }
+        },
+        getParams: function() {
+            var params = '', k;
+            for (k in this.options) {
+                if (typeof this.defaultWindowOptions[k] != 'undefined') {
+                    params += (params ? "," : "") + k + "=" + this.options[k];
+                }
+            }
+            return params;
+        },
+        fireEvent: function(element, name) {
+            if (!element) return false;
+
+            if (typeof element[name] == 'function') {
+                element[name]();
+            } else {
+                var event;
+                if (document.createEvent) {
+                    event = document.createEvent("HTMLEvents");
+                    event.initEvent(name, true, true);
+                  } else {
+                    event = document.createEventObject();
+                    event.eventType = name;
+                  }
+                  event.eventName = event;
+                if (document.createEvent) {
+                    element.dispatchEvent(event);
+                } else {
+                    element.fireEvent("on" + event.eventType, event);
+                }
+            }
+        },
+        detachEvent: function(event, callback, object) {
+            var object = object || window;
+            if (!object.removeEventListener) {
+                return object.detachEvent("on" + event, callback);
+            }
+            return object.removeEventListener(event, callback);
+        },
+        attachEvent: function(event, callback, object) {
+            var object = object || window;
+            if (!object.addEventListener) {
+                return object.attachEvent("on" + event, callback);
+            }
+            return object.addEventListener(event, callback);
+        },
+        mergeObject: function() {
+            var obj = {}, i, k;
+            for(i in arguments) {
+                for (k in arguments[i]) {
+                    obj[k] = arguments[i][k];
+                }
+            }
+            return obj;
+        },
+        getCookie: function(name) {
+            var cookieMatch = document.cookie.match(new RegExp(name+"=[^;]+", "i"));
+            return cookieMatch ? decodeURIComponent(cookieMatch[0].split("=")[1]) : null;
+        },
+        setCookie: function(name, value, expires, path) {
+            // expires must be number of minutes or instance of Date;
+            if(expires === null || typeof expires == 'undefined') {
+                expires = '';
+            } else {
+                var date;
+                if (typeof expires == 'number') {
+                    date = new Date();
+                    date.setTime(date.getTime() + expires * 3600000);
+                } else {
+                    date = expires;
+                }
+                expires = "; expires=" + date.toUTCString();
+            }
+            document.cookie = name + "=" + escape(value) + expires + "; path=" + (path || '/');
+        }
+    };
+    Popunder.make = function(url, options) {
+        return new this(url, options);
+    };
+    window.SmartPopunder = Popunder;
+})(window);
