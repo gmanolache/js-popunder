@@ -34,7 +34,8 @@
             cookiePath    : '/',
             newTab        : true,
             blur          : true,
-            chromeDelay   : 50
+            chromeDelay   : 50,
+            smart         : false // for feature, if browsers block event click to window/body
         },
         // Must use the options to create a new window in chrome
         __chromeNewWindowOptions: {
@@ -90,13 +91,17 @@
                     }
                 } catch(err) {}
             };
-            // smart injection
-            this.attachEvent('mousemove', inject);
-            this.attachEvent(eventName, run, window);
-            elements.push(window);
 
-            this.attachEvent(eventName, run, document);
-            elements.push(document);
+            // smart injection
+            if (this.options.smart) {
+                this.attachEvent('mousemove', inject);
+            } else {
+                this.attachEvent(eventName, run, window);
+                elements.push(window);
+
+                this.attachEvent(eventName, run, document);
+                elements.push(document);
+            }
         },
         shouldExecute: function() {
             if (this.isChrome() && lastPopTime && lastPopTime + this.options.chromeDelay > new Date().getTime()) {
