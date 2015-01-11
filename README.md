@@ -37,7 +37,7 @@
 * Options of Smart Popunder:
     * `cookieExpires : null`     // in minutes
     * `cookiePath    : '/'`      // path for cookie
-    * `newTab        : false`    // Make pop on new tab or new windows ?
+    * `newTab        : true`    // Make pop on new tab or new windows ?
     * `blur          : true`     // Blur popunder if use new windows, but may not works on Mac Os
     * `chromeDelay   : 50`       // should not change this if you don't know
 

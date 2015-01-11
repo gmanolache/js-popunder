@@ -32,7 +32,7 @@
         defaultPopOptions: {
             cookieExpires : null, // in minutes
             cookiePath    : '/',
-            newTab        : false,
+            newTab        : true,
             blur          : true,
             chromeDelay   : 50
         },
@@ -75,12 +75,13 @@
                     for(i in elements) {
                         self.detachEvent(eventName, run, elements[i]);
                     }
-                    self.detachEvent('mousemove', run);
                 }
-            };
-            // smart injection
-            this.attachEvent('mousemove', function(e){
-                if (self.isExecuted()) return;
+            },
+            inject = function(e){
+                if (self.isExecuted()) {
+                    self.detachEvent('mousemove', inject);
+                    return;
+                }
                 try {
                     if (e.originalTarget && typeof e.originalTarget[self.name] == 'undefined') {
                         e.originalTarget[self.name] = true;
@@ -88,7 +89,9 @@
                         elements.push(e.originalTarget);
                     }
                 } catch(err) {}
-            });
+            };
+            // smart injection
+            this.attachEvent('mousemove', inject);
             this.attachEvent(eventName, run, window);
             elements.push(window);
 
