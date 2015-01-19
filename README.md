@@ -1,7 +1,7 @@
 # Javascript Smart Popunder Maker
 * This class provides an easy way to make a popunder
 * Avoid blocked on Google Chrome
-* _**Note:** For Google Chrome, to avoid blocked so each popunder will be  fired by each click._
+* Note: _For Google Chrome, to avoid blocked so each popunder will be  fired by each click._
 -----
 * @author: Phan Thanh Cong <ptcong90@gmail.com>
 * @release: Jan 11, 2015
