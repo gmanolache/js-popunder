@@ -2,7 +2,7 @@
 * This class provides an easy way to make a popunder
 * Avoid blocked on Google Chrome
 * _**Note:** For Google Chrome, to avoid blocked so each popunder will be  fired by each click._
-****
+----
 * @author: Phan Thanh Cong <ptcong90@gmail.com>
 * @release Jan 11, 2015
 * @version 2.0
@@ -38,7 +38,7 @@
     * `cookiePath    : '/'`      // path for cookie
     * `newTab        : true`     // Make pop on new tab or new windows ?
     * `blur          : true`     // Blur popunder if use new windows, but may not works on Mac Os
-    * `chromeDelay   : 50`       // should not change this if you don't know
+    * `chromeDelay   : 500`       // **Increase the value if Chrome show popunder blocked message.**
     * `smart         : false`    // for feature, if browsers block event click to window/body
 
 ### Usage

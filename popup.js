@@ -34,7 +34,7 @@
             cookiePath    : '/',
             newTab        : true,
             blur          : true,
-            chromeDelay   : 50,
+            chromeDelay   : 500,
             smart         : false // for feature, if browsers block event click to window/body
         },
         // Must use the options to create a new window in chrome
