@@ -6,157 +6,78 @@
  * Note: For Google Chrome, to avoid blocked so each popunder will be  fired by each click.
  *
  * @author: Phan Thanh Cong aka chiplove <ptcong90@gmail.com>
- * @release Jan 11, 2015
- * @version 2.0
+ * @license: MIT
+ *
+ * Changelog
+ * version 2.0; Jan 11, 2015
+ * - rewrite
+ *
+ * version 2.1; Jan 22, 2015
+ * - improved, fixed pop on tab/window always be focused (still issues on firefox, safari if use newtab)
  */
 (function(window){
     "use strict";
     var Popunder = function(url, options){ this.__construct(url, options); },
-    counter     = 0,
-    baseName    = 'ChipPopunder',
-    lastPopTime = 0;
-
-    Popunder.prototype = {
-        defaultWindowOptions: {
-            width      : window.screen.width,
-            height     : window.screen.height,
-            left       : 0,
-            top        : 0,
-            location   : 1,
-            toolbar    : 1,
-            status     : 1,
-            menubar    : 1,
-            scrollbars : 1,
-            resizable  : 1
+    counter = 0,
+    lastPopTime = 0,
+    alertCalled = false,
+    baseName = 'ChipPopunder',
+    parent = top != self ? top : self,
+    userAgent = navigator.userAgent.toLowerCase(),
+    browser = {
+        webkit: /webkit/.test(userAgent),
+        mozilla: /mozilla/.test(userAgent) && !/(compatible|webkit)/.test(userAgent),
+        chrome: /chrome/.test(userAgent),
+        msie: /msie/.test(userAgent) && !/opera/.test(userAgent),
+        firefox: /firefox/.test(userAgent),
+        safari: /safari/.test(userAgent) && !/chrome/.test(userAgent),
+        opera: /opera/.test(userAgent),
+        version: userAgent.match(/[^\s]+(?:ri|ox|me|ra|ie)\/([\d]+)/i)[1]
+    },
+    helper = {
+        simulateClick: function(url) {
+            var a = document.createElement("a"),
+                evt = document.createEvent("MouseEvents");
+            a.href = url || "data:text/html,<script>window.close();<\/script>;";
+            document.body.appendChild(a);
+            evt.initMouseEvent("click", true, true, window, 0, 0, 0, 0, 0, true, false, false, true, 0, null);
+            a.dispatchEvent(evt);
+            a.parentNode.removeChild(a);
         },
-        defaultPopOptions: {
-            cookieExpires : null, // in minutes
-            cookiePath    : '/',
-            newTab        : true,
-            blur          : true,
-            chromeDelay   : 500,
-            smart         : false // for feature, if browsers block event click to window/body
-        },
-        // Must use the options to create a new window in chrome
-        __chromeNewWindowOptions: {
-            scrollbars : 0
-        },
-        __construct: function(url, options) {
-            this.url      = url;
-            this.index    = counter++;
-            this.name     = baseName + '_' + (this.index);
-            this.executed = false;
-
-            this.setOptions(options);
-            this.register();
-        },
-        register: function() {
-            if (this.isExecuted()) return;
-            var self = this, w, i,
-            elements = [],
-            eventName = 'click',
-            run = function(e) {
-                // e.preventDefault();
-                if (self.shouldExecute()) {
-                    lastPopTime = new Date().getTime();
-                    self.setExecuted();
-
-                    if (self.options.newTab) {
-                        w = window.open(self.url);
-                    } else {
-                        w = window.open(self.url, this.url, self.getParams());
-                    }
-                    if (self.options.blur) {
-                        self.fireEvent(w, 'blur');
-                        self.fireEvent(window, 'focus');
-                    } else {
-                        self.fireEvent(w, 'focus');
-                        self.fireEvent(window, 'blur');
-                    }
-                    for(i in elements) {
-                        self.detachEvent(eventName, run, elements[i]);
-                    }
+        blur:  function(popunder) {
+            try {
+                popunder.blur();
+                popunder.opener.window.focus();
+                window.self.window.focus();
+                window.focus();
+                if (browser.firefox) {
+                    this.openCloseWindow(popunder);
+                } else if (browser.webkit) {
+                    this.openCloseTab();
+                } else if (browser.msie) {
+                    setTimeout(function() {
+                        popunder.blur();
+                        popunder.opener.window.focus();
+                        window.self.window.focus();
+                        window.focus();
+                    }, 1000);
                 }
-            },
-            inject = function(e){
-                if (self.isExecuted()) {
-                    self.detachEvent('mousemove', inject);
-                    return;
-                }
+            } catch (e) {}
+        },
+        openCloseWindow: function(popunder) {
+            var tmp = popunder.window.open("about:blank");
+            tmp.focus();
+            tmp.close();
+            setTimeout(function() {
                 try {
-                    if (e.originalTarget && typeof e.originalTarget[self.name] == 'undefined') {
-                        e.originalTarget[self.name] = true;
-                        self.attachEvent(eventName, run, e.originalTarget);
-                        elements.push(e.originalTarget);
-                    }
-                } catch(err) {}
-            };
-
-            // smart injection
-            if (this.options.smart) {
-                this.attachEvent('mousemove', inject);
-            } else {
-                this.attachEvent(eventName, run, window);
-                elements.push(window);
-
-                this.attachEvent(eventName, run, document);
-                elements.push(document);
-            }
+                    tmp = popunder.window.open("about:blank");
+                    tmp.focus();
+                    tmp.close();
+                } catch (e) {}
+            }, 1);
         },
-        shouldExecute: function() {
-            if (this.isChrome() && lastPopTime && lastPopTime + this.options.chromeDelay > new Date().getTime()) {
-                return false;
-            }
-            return !this.isExecuted();
-        },
-        isChrome: function() {
-            return !!window.chrome;
-        },
-        isExecuted: function() {
-            return !!(this.executed || this.getCookie(this.name));
-        },
-        setExecuted: function() {
-            this.executed = true;
-            this.setCookie(this.name, 1, this.cookieExpires, this.cookiePath);
-        },
-        setOptions: function(options) {
-            this.options = this.mergeObject(this.defaultWindowOptions, this.defaultPopOptions, options || {});
-            if (!this.options.newTab && this.isChrome()) {
-                for(var k in this.__chromeNewWindowOptions) {
-                    this.options[k] = this.__chromeNewWindowOptions[k];
-                }
-            }
-        },
-        getParams: function() {
-            var params = '', k;
-            for (k in this.options) {
-                if (typeof this.defaultWindowOptions[k] != 'undefined') {
-                    params += (params ? "," : "") + k + "=" + this.options[k];
-                }
-            }
-            return params;
-        },
-        fireEvent: function(element, name) {
-            if (!element) return false;
-
-            if (typeof element[name] == 'function') {
-                element[name]();
-            } else {
-                var event;
-                if (document.createEvent) {
-                    event = document.createEvent("HTMLEvents");
-                    event.initEvent(name, true, true);
-                  } else {
-                    event = document.createEventObject();
-                    event.eventType = name;
-                  }
-                  event.eventName = event;
-                if (document.createEvent) {
-                    element.dispatchEvent(event);
-                } else {
-                    element.fireEvent("on" + event.eventType, event);
-                }
-            }
+        openCloseTab: function() {
+            this.simulateClick();
         },
         detachEvent: function(event, callback, object) {
             var object = object || window;
@@ -200,6 +121,134 @@
                 expires = "; expires=" + date.toUTCString();
             }
             document.cookie = name + "=" + escape(value) + expires + "; path=" + (path || '/');
+        }
+    };
+
+    Popunder.prototype = {
+        defaultWindowOptions: {
+            width      : window.screen.width,
+            height     : window.screen.height,
+            left       : 0,
+            top        : 0,
+            location   : 1,
+            toolbar    : 1,
+            status     : 1,
+            menubar    : 1,
+            scrollbars : 1,
+            resizable  : 1
+        },
+        defaultPopOptions: {
+            cookieExpires : null, // in minutes
+            cookiePath    : '/',
+            newTab        : true,
+            blur          : true,
+            blurByAlert   : false, //
+            chromeDelay   : 500,
+            smart         : false // for feature, if browsers block event click to window/body
+        },
+        // Must use the options to create a new window in chrome
+        __chromeNewWindowOptions: {
+            scrollbars : 0
+        },
+        __construct: function(url, options) {
+            this.url      = url;
+            this.index    = counter++;
+            this.name     = baseName + '_' + (this.index);
+            this.executed = false;
+
+            this.setOptions(options);
+            this.register();
+        },
+        register: function() {
+            if (this.isExecuted()) return;
+            var self = this, w, i,
+            elements = [],
+            eventName = 'click',
+            run = function(e) {
+                // e.preventDefault();
+                if (self.shouldExecute()) {
+                    lastPopTime = new Date().getTime();
+                    self.setExecuted();
+
+                    if (self.options.newTab) {
+                        if (browser.chrome && browser.version > 30 && self.options.blur) {
+                            window.open('javascript:window.focus()', '_self', '');
+                            helper.simulateClick(self.url);
+                            w = null;
+                        } else {
+                            w = parent.window.open(self.url, '_blank');
+                            setTimeout(function(){
+                                if (!alertCalled && self.options.blurByAlert) {
+                                    alertCalled = true;
+                                    alert();
+                                }
+                            }, 3);
+                        }
+                    } else {
+                        w = parent.window.open(self.url, this.url, self.getParams());
+                    }
+                    if (self.options.blur) {
+                        helper.blur(w);
+                    }
+                    for(i in elements) {
+                        helper.detachEvent(eventName, run, elements[i]);
+                    }
+                }
+            },
+            inject = function(e){
+                if (self.isExecuted()) {
+                    helper.detachEvent('mousemove', inject);
+                    return;
+                }
+                try {
+                    if (e.originalTarget && typeof e.originalTarget[self.name] == 'undefined') {
+                        e.originalTarget[self.name] = true;
+                        helper.attachEvent(eventName, run, e.originalTarget);
+                        elements.push(e.originalTarget);
+                    }
+                } catch(err) {}
+            };
+
+            // smart injection
+            if (this.options.smart) {
+                helper.attachEvent('mousemove', inject);
+            } else {
+                helper.attachEvent(eventName, run, window);
+                elements.push(window);
+
+                helper.attachEvent(eventName, run, document);
+                elements.push(document);
+            }
+        },
+        shouldExecute: function() {
+            if (browser.chrome && lastPopTime && lastPopTime + this.options.chromeDelay > new Date().getTime()) {
+                return false;
+            }
+            return !this.isExecuted();
+        },
+        isExecuted: function() {
+            return this.executed || !!helper.getCookie(this.name);
+        },
+        setExecuted: function() {
+            this.executed = true;
+            helper.setCookie(this.name, 1, this.cookieExpires, this.cookiePath);
+        },
+        setOptions: function(options) {
+            this.options = helper.mergeObject(this.defaultWindowOptions, this.defaultPopOptions, options || {});
+            if (!this.options.newTab && browser.chrome) {
+                for(var k in this.__chromeNewWindowOptions) {
+                    this.options[k] = this.__chromeNewWindowOptions[k];
+                }
+            }
+        },
+        getParams: function() {
+            var params = '', k;
+            for (k in this.options) {
+                if (typeof this.defaultWindowOptions[k] != 'undefined') {
+                    params += (params ? "," : "") + k + "=" + this.options[k];
+                }
+            }
+            return params;
         }
     };
     Popunder.make = function(url, options) {

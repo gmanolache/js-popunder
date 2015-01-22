@@ -10,6 +10,10 @@
 * @license: MIT
 
 ### Change logs
+##### Version 2.1 - Jan 20, 2015
+* Improved, fixed pop on tab/window always be focused. (still issues on firefox, safari if use newtab)
+* New option `blurByAlert` (will show an alert message to focus the current tab - only for firefox, safari)
+
 ##### Version 2.0 - Jan 11, 2015
 * Rewrite all the class.
 * Add new SMART features to bypass Google Chrome Popup Blocker.
@@ -35,11 +39,12 @@
     * `scrollbars : 1`
     * `resizable  : 1`
 
-* Options of Smart Popunder:
+* Options of Smart Popunder and default value:
     * `cookieExpires : null`     // in minutes
     * `cookiePath    : '/'`      // path for cookie
     * `newTab        : true`     // Make pop on new tab or new windows ?
     * `blur          : true`     // Blur popunder if use new windows, but may not works on Mac Os
+    * `blurByAlert   : false`    // For firefox, safari if open on newTab (will show an alert to force focus the current window)
     * `chromeDelay   : 500`       // **Increase the value if Chrome show popunder blocked message.**
     * `smart         : false`    // for feature, if browsers block event click to window/body
 
