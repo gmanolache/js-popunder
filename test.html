@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Template</title>
+    <script type="text/javascript" src="popup.js"></script>
+    <script>
+        SmartPopunder.make('http://pop1.com/newwindow', {newTab: false});
+        SmartPopunder.make('http://pop2.com/newtab', {newTab: true, cookieExpires: 12 * 60}); // 10 hours
+    </script>
+  </head>
+  <body>
+  Click to get popunder
+  </body>
+</html>
