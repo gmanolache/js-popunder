@@ -20,6 +20,7 @@
  */
 (function(window){
     "use strict";
+
     var Popunder = function(url, options){ this.__construct(url, options); },
     counter = 0,
     lastPopTime = 0,
@@ -133,7 +134,7 @@
                 var date;
                 if (typeof expires == 'number') {
                     date = new Date();
-                    date.setTime(date.getTime() + expires * 3600000);
+                    date.setTime(date.getTime() + expires * 60 * 1e3);
                 } else {
                     date = expires;
                 }
@@ -250,11 +251,7 @@
         },
         setExecuted: function() {
             this.executed = true;
-<<<<<<< HEAD
             // helper.setCookie(this.name, 1, this.options.cookieExpires, this.options.cookiePath);
-=======
-            helper.setCookie(this.name, 1, this.cookieExpires, this.cookiePath);
->>>>>>> parent of df9e28a... fix cookie expires
         },
         setOptions: function(options) {
             this.options = helper.mergeObject(this.defaultWindowOptions, this.defaultPopOptions, options || {});
