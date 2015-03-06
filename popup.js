@@ -14,6 +14,9 @@
  *
  * version 2.1; Jan 22, 2015
  * - improved, fixed pop on tab/window always be focused (still issues on firefox, safari if use newtab)
+ *
+ * version 2.2; Mar 06, 2015
+ * - update for google chrome 41.x (fire popunder ok, but can't blur now)
  */
 (function(window){
     "use strict";
@@ -36,10 +39,21 @@
         version: userAgent.match(/[^\s]+(?:ri|ox|me|ra|ie)\/([\d]+)/i)[1]
     },
     helper = {
+        getRandom: function(len) {
+            var pool = 'abcdefghijklmnopqrstuvwxyz',
+                len = len || 32,
+                i = len,
+                str = '';
+            while(i--) {
+                str += pool.charAt(Math.round(Math.random()*len)-1);
+            }
+            return str;
+        },
         simulateClick: function(url) {
             var a = document.createElement("a"),
+                nothing = "",
                 evt = document.createEvent("MouseEvents");
-            a.href = url || "data:text/html,<script>window.close();<\/script>;";
+            a.href = url || "data:text/html,<scr" + nothing + "ipt>window.close();<\/s" + nothing + "cript>;";
             document.body.appendChild(a);
             evt.initMouseEvent("click", true, true, window, 0, 0, 0, 0, 0, true, false, false, true, 0, null);
             a.dispatchEvent(evt);
@@ -54,7 +68,12 @@
                 if (browser.firefox) {
                     this.openCloseWindow(popunder);
                 } else if (browser.webkit) {
-                    this.openCloseTab();
+                    // try to blur popunder window on chrome
+                    // but not works on chrome 41
+                    // so we should wrap this to avoid chrome display warning
+                    if (!browser.chrome || (browser.chrome && browser.version < 41)) {
+                        this.openCloseTab();
+                    }
                 } else if (browser.msie) {
                     setTimeout(function() {
                         popunder.blur();
@@ -63,7 +82,7 @@
                         window.focus();
                     }, 1000);
                 }
-            } catch (e) {}
+            } catch(err) {}
         },
         openCloseWindow: function(popunder) {
             var tmp = popunder.window.open("about:blank");
@@ -232,7 +251,7 @@
         },
         setExecuted: function() {
             this.executed = true;
-            helper.setCookie(this.name, 1, this.options.cookieExpires, this.options.cookiePath);
+            // helper.setCookie(this.name, 1, this.options.cookieExpires, this.options.cookiePath);
         },
         setOptions: function(options) {
             this.options = helper.mergeObject(this.defaultWindowOptions, this.defaultPopOptions, options || {});

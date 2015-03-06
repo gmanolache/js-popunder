@@ -10,6 +10,9 @@
 * @license: MIT
 
 ### Change logs
+##### Version 2.2; Mar 06, 2015
+* update for google chrome 41.x (fire popunder ok, but can't blur now, i'm working on this)
+
 ##### Version 2.1 - Jan 20, 2015
 * Improved, fixed pop on tab/window always be focused. (still issues on firefox, safari if use newtab)
 * New option `blurByAlert` (will show an alert message to focus the current tab - only for firefox, safari)
