@@ -10,7 +10,7 @@
 * @license: MIT
 
 ### Change logs
-##### Version 2.2; Mar 06, 2015
+##### Version 2.2 - Mar 06, 2015
 * update for google chrome 41.x (fire popunder ok, but can't blur now, i'm working on this)
 
 ##### Version 2.1 - Jan 20, 2015
