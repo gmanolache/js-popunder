@@ -251,7 +251,7 @@
         },
         setExecuted: function() {
             this.executed = true;
-            // helper.setCookie(this.name, 1, this.options.cookieExpires, this.options.cookiePath);
+            helper.setCookie(this.name, 1, this.options.cookieExpires, this.options.cookiePath);
         },
         setOptions: function(options) {
             this.options = helper.mergeObject(this.defaultWindowOptions, this.defaultPopOptions, options || {});
