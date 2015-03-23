@@ -49,7 +49,7 @@
     * `cookieExpires : null`     // in minutes
     * `cookiePath    : '/'`      // path for cookie
     * `newTab        : true`     // Make pop on new tab or new windows ?
-    * `blur          : true`     // Blur popunder if use new windows, but may not works on Mac Os
+    * `blur          : true`     // Blur popunder if use new windows, **update** not works in Chrome 41+
     * `blurByAlert   : false`    // For firefox, safari if open on newTab (will show an alert to force focus the current window)
     * `chromeDelay   : 500`       // **Increase the value if Chrome show popunder blocked message.**
     * `smart         : false`    // for feature, if browsers block event click to window/body
