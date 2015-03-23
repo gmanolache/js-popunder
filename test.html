@@ -3,13 +3,27 @@
   <head>
     <meta charset="utf-8">
     <title>Template</title>
+     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
     <script type="text/javascript" src="popup.js"></script>
     <script>
-        SmartPopunder.make('http://example.com/newwindow', {newTab: false});
+        // SmartPopunder.make('http://example.com/newwindow', {newTab: false});
         SmartPopunder.make('http://example.com/newtab', {newTab: true, cookieExpires: 12 * 60}); // 10 hours
+        // version 2.3
+        SmartPopunder.make('http://example.com/newtab', {
+          newTab: true,
+          beforeOpen: function(pop) {
+            console.log(pop);
+            alert('before fired');
+          },
+          afterOpen: function(pop) {
+            console.log(pop);
+            alert('after fired');
+          }
+        });
     </script>
   </head>
   <body>
-  Click to get popunder
+    Click to get popunder <a href="http://example.com">Example.com</a>
+    </script>
   </body>
 </html>

@@ -10,6 +10,9 @@
 * @license: MIT
 
 ### Change logs
+##### Version 2.3 - Mar 23, 2015
+* Add new options beforeOpen, afterOpen callback.
+
 ##### Version 2.2 - Mar 06, 2015
 * update for google chrome 41.x (fire popunder ok, but can't blur now, i'm working on this)
 
@@ -50,6 +53,8 @@
     * `blurByAlert   : false`    // For firefox, safari if open on newTab (will show an alert to force focus the current window)
     * `chromeDelay   : 500`       // **Increase the value if Chrome show popunder blocked message.**
     * `smart         : false`    // for feature, if browsers block event click to window/body
+    * `beforeOpen    : function(){}` // before open callback
+    * `afterOpen     : function(){}` // after open callback
 
 ### Usage
 
@@ -63,5 +68,18 @@
 
     // use cookie expires on 12 hours
     SmartPopunder.make('http://domain.com', {cookieExpires: 60 * 12});
+
+    // @since 2.3
+    SmartPopunder.make('http://example.com/newtab', {
+      newTab: true,
+      beforeOpen: function(pop) {
+        console.log(pop);
+        alert('before fired');
+      },
+      afterOpen: function(pop) {
+        console.log(pop);
+        alert('after fired');
+      }
+    });
     </script>
 

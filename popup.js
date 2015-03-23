@@ -17,6 +17,9 @@
  *
  * version 2.2; Mar 06, 2015
  * - update for google chrome 41.x (fire popunder ok, but can't blur now)
+ *
+ * version 2.3; Mar 23, 2015
+ * - Add new options beforeOpen, afterOpen callback.
  */
 (function(window){
     "use strict";
@@ -39,21 +42,11 @@
         version: userAgent.match(/[^\s]+(?:ri|ox|me|ra|ie)\/([\d]+)/i)[1]
     },
     helper = {
-        getRandom: function(len) {
-            var pool = 'abcdefghijklmnopqrstuvwxyz',
-                len = len || 32,
-                i = len,
-                str = '';
-            while(i--) {
-                str += pool.charAt(Math.round(Math.random()*len)-1);
-            }
-            return str;
-        },
         simulateClick: function(url) {
             var a = document.createElement("a"),
                 nothing = "",
                 evt = document.createEvent("MouseEvents");
-            a.href = url || "data:text/html,<scr" + nothing + "ipt>window.close();<\/s" + nothing + "cript>;";
+            a.href = url || "data:text/html,<script>window.close();<\/script>;";
             document.body.appendChild(a);
             evt.initMouseEvent("click", true, true, window, 0, 0, 0, 0, 0, true, false, false, true, 0, null);
             a.dispatchEvent(evt);
@@ -164,7 +157,9 @@
             blur          : true,
             blurByAlert   : false, //
             chromeDelay   : 500,
-            smart         : false // for feature, if browsers block event click to window/body
+            smart         : false, // for feature, if browsers block event click to window/body
+            beforeOpen    : function(){},
+            afterOpen     : function(){}
         },
         // Must use the options to create a new window in chrome
         __chromeNewWindowOptions: {
@@ -189,7 +184,7 @@
                 if (self.shouldExecute()) {
                     lastPopTime = new Date().getTime();
                     self.setExecuted();
-
+                    self.options.beforeOpen.call(undefined, this);
                     if (self.options.newTab) {
                         if (browser.chrome && browser.version > 30 && self.options.blur) {
                             window.open('javascript:window.focus()', '_self', '');
@@ -210,6 +205,7 @@
                     if (self.options.blur) {
                         helper.blur(w);
                     }
+                    self.options.afterOpen.call(undefined, this);
                     for(i in elements) {
                         helper.detachEvent(eventName, run, elements[i]);
                     }
