@@ -5,8 +5,6 @@
 
 -----
 * @author: Phan Thanh Cong <ptcong90@gmail.com>
-* @release: Jan 11, 2015
-* @version: 2.0
 * @license: MIT
 
 ### Change logs
