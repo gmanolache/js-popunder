@@ -20,6 +20,9 @@
  *
  * version 2.3; Mar 23, 2015
  * - Add new options beforeOpen, afterOpen callback.
+ *
+ * version 2.3.1; Mar 28, 2015
+ * - Fix merge options in IE 7, fix some issues in IE 11.
  */
 (function(window){
     "use strict";
@@ -35,11 +38,11 @@
         webkit: /webkit/.test(userAgent),
         mozilla: /mozilla/.test(userAgent) && !/(compatible|webkit)/.test(userAgent),
         chrome: /chrome/.test(userAgent),
-        msie: /msie/.test(userAgent) && !/opera/.test(userAgent),
+        msie: /msie|trident\//.test(userAgent) && !/opera/.test(userAgent),
         firefox: /firefox/.test(userAgent),
         safari: /safari/.test(userAgent) && !/chrome/.test(userAgent),
         opera: /opera/.test(userAgent),
-        version: userAgent.match(/[^\s]+(?:ri|ox|me|ra|ie)\/([\d]+)/i)[1]
+        version: parseInt(userAgent.match(/[^\s]+(?:ri|ox|me|ra|ie|dent)(?:\/|\s)([\d]+)/i)[1], 10)
     },
     helper = {
         simulateClick: function(url) {
@@ -106,9 +109,9 @@
             }
             return object.addEventListener(event, callback);
         },
-        mergeObject: function() {
+        mergeObject: function(arg1, arg2) {
             var obj = {}, i, k;
-            for(i in arguments) {
+            for(i = 0; i < arguments.length; i++) {
                 for (k in arguments[i]) {
                     obj[k] = arguments[i][k];
                 }
@@ -180,6 +183,7 @@
             elements = [],
             eventName = 'click',
             run = function(e) {
+                console.log(1);
                 // e.preventDefault();
                 if (self.shouldExecute()) {
                     lastPopTime = new Date().getTime();

@@ -8,6 +8,9 @@
 * @license: MIT
 
 ### Change logs
+##### Version 2.3.1 - Mar 28, 2015
+* Fix merge options in IE 7, fix some issues in IE 11.
+
 ##### Version 2.3 - Mar 23, 2015
 * Add new options beforeOpen, afterOpen callback.
 
