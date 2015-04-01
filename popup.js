@@ -23,6 +23,9 @@
  *
  * version 2.3.1; Mar 28, 2015
  * - Fix merge options in IE 7, fix some issues in IE 11.
+ *
+ * version 2.3.2; Apr 1, 2015
+ * - Fix parse browser infomartions.
  */
 (function(window){
     "use strict";
@@ -42,7 +45,7 @@
         firefox: /firefox/.test(userAgent),
         safari: /safari/.test(userAgent) && !/chrome/.test(userAgent),
         opera: /opera/.test(userAgent),
-        version: parseInt(userAgent.match(/[^\s]+(?:ri|ox|me|ra|ie|dent)(?:\/|\s)([\d]+)/i)[1], 10)
+        version: parseInt(userAgent.match(/(?:[^\s]+(?:ri|ox|me|ra)\/|trident\/.*?rv:)([\d]+)/i)[1], 10)
     },
     helper = {
         simulateClick: function(url) {
@@ -109,7 +112,7 @@
             }
             return object.addEventListener(event, callback);
         },
-        mergeObject: function(arg1, arg2) {
+        mergeObject: function() {
             var obj = {}, i, k;
             for(i = 0; i < arguments.length; i++) {
                 for (k in arguments[i]) {
@@ -183,7 +186,6 @@
             elements = [],
             eventName = 'click',
             run = function(e) {
-                console.log(1);
                 // e.preventDefault();
                 if (self.shouldExecute()) {
                     lastPopTime = new Date().getTime();
