@@ -9,7 +9,11 @@
 
 ### Change logs
 
-##### version 2.3.2; Apr 1, 2015
+##### Version 2.4.0; May 15, 2015
+ * Make popunder (blur + !newTab) works on firefox, webkit with flash
+ * Remove `smart`, `blurByAlert` options
+
+##### Version 2.3.2; Apr 1, 2015
 * Fix parse browser version in IE 11.
 
 ##### Version 2.3.1 - Mar 28, 2015
@@ -54,10 +58,10 @@
     * `cookieExpires : null`     // in minutes
     * `cookiePath    : '/'`      // path for cookie
     * `newTab        : true`     // Make pop on new tab or new windows ?
-    * `blur          : true`     // Blur popunder if use new windows, **update** not works in Chrome 41+
-    * `blurByAlert   : false`    // For firefox, safari if open on newTab (will show an alert to force focus the current window)
+    * `blur          : true`     // Blur popunder
+    * ~~`blurByAlert   : false`    // For firefox, safari if open on newTab (will show an alert to force focus the current window)~~
     * `chromeDelay   : 500`       // **Increase the value if Chrome show popunder blocked message.**
-    * `smart         : false`    // for feature, if browsers block event click to window/body
+    * ~~`smart         : false`    // for feature, if browsers block event click to window/body~~
     * `beforeOpen    : function(){}` // before open callback
     * `afterOpen     : function(){}` // after open callback
 

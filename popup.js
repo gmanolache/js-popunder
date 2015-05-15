@@ -26,15 +26,18 @@
  *
  * version 2.3.2; Apr 1, 2015
  * - Fix parse browser infomartions.
+ *
+ * version 2.4.0; May 15, 2015
+ * - Make popunder (blur + !newTab) works on firefox, webkit with flash
+ * - Remove `smart`, `blurByAlert` options
  */
 (function(window){
-    "use strict";
+    'use strict';
 
     var Popunder = function(url, options){ this.__construct(url, options); },
     counter = 0,
     lastPopTime = 0,
-    alertCalled = false,
-    baseName = 'ChipPopunder',
+    baseName = 'SmartPopunder',
     parent = top != self ? top : self,
     userAgent = navigator.userAgent.toLowerCase(),
     browser = {
@@ -49,12 +52,12 @@
     },
     helper = {
         simulateClick: function(url) {
-            var a = document.createElement("a"),
-                nothing = "",
-                evt = document.createEvent("MouseEvents");
-            a.href = url || "data:text/html,<script>window.close();<\/script>;";
+            var a = document.createElement('a'),
+                nothing = '',
+                evt = document.createEvent('MouseEvents');
+            a.href = url || 'data:text/html,<script>window.close();<\/script>;';
             document.body.appendChild(a);
-            evt.initMouseEvent("click", true, true, window, 0, 0, 0, 0, 0, true, false, false, true, 0, null);
+            evt.initMouseEvent('click', true, true, window, 0, 0, 0, 0, 0, true, false, false, true, 0, null);
             a.dispatchEvent(evt);
             a.parentNode.removeChild(a);
         },
@@ -83,13 +86,20 @@
                 }
             } catch(err) {}
         },
+        createElement: function(tag, attrs) {
+            var element = document.createElement(tag);
+            for(var i in attrs) {
+                element.setAttribute(i, attrs[i]);
+            }
+            return element;
+        },
         openCloseWindow: function(popunder) {
-            var tmp = popunder.window.open("about:blank");
+            var tmp = popunder.window.open('about:blank');
             tmp.focus();
             tmp.close();
             setTimeout(function() {
                 try {
-                    tmp = popunder.window.open("about:blank");
+                    tmp = popunder.window.open('about:blank');
                     tmp.focus();
                     tmp.close();
                 } catch (e) {}
@@ -98,17 +108,66 @@
         openCloseTab: function() {
             this.simulateClick();
         },
+        isFlashInstalled: function() {
+            return !!navigator.mimeTypes['application/x-shockwave-flash'];
+        },
+        initFlashPopunder: function(pop) {
+            if (!this.isFlashInstalled) return;
+
+            var self = this,
+            identifier = pop.name,
+            timer,
+            object = this.createElement('object', {
+                'type': 'application/x-shockwave-flash',
+                'data': Popunder.flashUrl,
+                'name': identifier,
+                'id': identifier,
+                'style': 'position:fixed;visibility:visible;left:0;top:0;width:1px;height:1px;z-index:9999999;'
+            });
+            object.appendChild(this.createElement('param', {
+                'name': 'flashvars',
+                'value': 'fire=' + pop.name + '.fire&name=' + pop.name
+            }));
+            object.appendChild(this.createElement('param', {
+                'name': 'wmode',
+                'value': 'transparent'
+            }));
+            object.appendChild(this.createElement('param', {
+                'name': 'menu',
+                'value': 'false'
+            }));
+            object.appendChild(this.createElement('param', {
+                'name': 'allowscriptaccess',
+                'value': 'always'
+            }));
+            timer = setInterval(function(){
+                if (document.readyState == 'complete') {
+                    clearInterval(timer);
+                    document.body.insertBefore(object, document.body.firstChild);
+                    object.focus();
+                    self.attachEvent('mousedown', function(obj){
+                        if (obj.button === 0) {
+                            document.getElementById(identifier).style.width
+                                = document.getElementById(identifier).style.height
+                                = '100%';
+                        }
+                    });
+                }
+            }, 10);
+
+            return object;
+        },
         detachEvent: function(event, callback, object) {
             var object = object || window;
             if (!object.removeEventListener) {
-                return object.detachEvent("on" + event, callback);
+                return object.detachEvent('on' + event, callback);
             }
             return object.removeEventListener(event, callback);
         },
         attachEvent: function(event, callback, object) {
             var object = object || window;
             if (!object.addEventListener) {
-                return object.attachEvent("on" + event, callback);
+                return object.attachEvent('on' + event, callback);
             }
             return object.addEventListener(event, callback);
         },
@@ -122,8 +181,8 @@
             return obj;
         },
         getCookie: function(name) {
-            var cookieMatch = document.cookie.match(new RegExp(name+"=[^;]+", "i"));
-            return cookieMatch ? decodeURIComponent(cookieMatch[0].split("=")[1]) : null;
+            var cookieMatch = document.cookie.match(new RegExp(name+'=[^;]+', 'i'));
+            return cookieMatch ? decodeURIComponent(cookieMatch[0].split('=')[1]) : null;
         },
         setCookie: function(name, value, expires, path) {
             // expires must be number of minutes or instance of Date;
@@ -137,12 +196,12 @@
                 } else {
                     date = expires;
                 }
-                expires = "; expires=" + date.toUTCString();
+                expires = '; expires=' + date.toUTCString();
             }
-            document.cookie = name + "=" + escape(value) + expires + "; path=" + (path || '/');
+            document.cookie = name + '=' + escape(value) + expires + '; path=' + (path || '/');
         }
     };
-
+    Popunder.flashUrl = 'flash/flash.swf';
     Popunder.prototype = {
         defaultWindowOptions: {
             width      : window.screen.width,
@@ -161,15 +220,17 @@
             cookiePath    : '/',
             newTab        : true,
             blur          : true,
-            blurByAlert   : false, //
             chromeDelay   : 500,
             smart         : false, // for feature, if browsers block event click to window/body
             beforeOpen    : function(){},
             afterOpen     : function(){}
         },
-        // Must use the options to create a new window in chrome
-        __chromeNewWindowOptions: {
-            scrollbars : 0
+        __newWindowOptionsFlash: {
+            menubar: 0,
+            toolbar: 0
+        },
+        __newWindowOptionsChromeBefore41: {
+            scrollbars : 1
         },
         __construct: function(url, options) {
             this.url      = url;
@@ -179,67 +240,48 @@
 
             this.setOptions(options);
             this.register();
+
+            window[this.name] = this;
         },
         register: function() {
             if (this.isExecuted()) return;
-            var self = this, w, i,
-            elements = [],
-            eventName = 'click',
-            run = function(e) {
-                // e.preventDefault();
+            // check options to initialize flash popunder
+            if (this.options.blur && !this.options.newTab) {
+                helper.initFlashPopunder(this);
+            }
+            var self = this, event = 'click',
+            run = function() {
                 if (self.shouldExecute()) {
-                    lastPopTime = new Date().getTime();
-                    self.setExecuted();
-                    self.options.beforeOpen.call(undefined, this);
-                    if (self.options.newTab) {
-                        if (browser.chrome && browser.version > 30 && self.options.blur) {
-                            window.open('javascript:window.focus()', '_self', '');
-                            helper.simulateClick(self.url);
-                            w = null;
-                        } else {
-                            w = parent.window.open(self.url, '_blank');
-                            setTimeout(function(){
-                                if (!alertCalled && self.options.blurByAlert) {
-                                    alertCalled = true;
-                                    alert();
-                                }
-                            }, 3);
-                        }
-                    } else {
-                        w = parent.window.open(self.url, this.url, self.getParams());
-                    }
-                    if (self.options.blur) {
-                        helper.blur(w);
-                    }
-                    self.options.afterOpen.call(undefined, this);
-                    for(i in elements) {
-                        helper.detachEvent(eventName, run, elements[i]);
-                    }
+                    self.fire();
+                    helper.detachEvent(event, run, window);
+                    helper.detachEvent(event, run, document);
                 }
-            },
-            inject = function(e){
-                if (self.isExecuted()) {
-                    helper.detachEvent('mousemove', inject);
-                    return;
-                }
-                try {
-                    if (e.originalTarget && typeof e.originalTarget[self.name] == 'undefined') {
-                        e.originalTarget[self.name] = true;
-                        helper.attachEvent(eventName, run, e.originalTarget);
-                        elements.push(e.originalTarget);
-                    }
-                } catch(err) {}
             };
+            helper.attachEvent(event, run, window);
+            helper.attachEvent(event, run, document);
+        },
+        fire: function(name) {
+            var self = window[name] || this, w;
+            self.options.beforeOpen.call(undefined, this);
 
-            // smart injection
-            if (this.options.smart) {
-                helper.attachEvent('mousemove', inject);
+            lastPopTime = new Date().getTime();
+            self.setExecuted();
+            if (self.options.newTab) {
+                if (browser.chrome && browser.version > 30 && self.options.blur) {
+                    window.open('javascript:window.focus()', '_self', '');
+                    helper.simulateClick(self.url);
+                    w = null;
+                } else {
+                    w = parent.window.open(self.url, '_blank');
+                }
             } else {
-                helper.attachEvent(eventName, run, window);
-                elements.push(window);
+                w = window.open(self.url, self.url, self.getParams());
+            }
 
-                helper.attachEvent(eventName, run, document);
-                elements.push(document);
+            self.options.afterOpen.call(undefined, this);
+
+            if (self.options.blur) {
+                helper.blur(w);
             }
         },
         shouldExecute: function() {
@@ -257,9 +299,16 @@
         },
         setOptions: function(options) {
             this.options = helper.mergeObject(this.defaultWindowOptions, this.defaultPopOptions, options || {});
-            if (!this.options.newTab && browser.chrome) {
-                for(var k in this.__chromeNewWindowOptions) {
-                    this.options[k] = this.__chromeNewWindowOptions[k];
+            if (!this.options.newTab) {
+                if (browser.chrome && browser.version < 41) {
+                    for(var k in this.__newWindowOptionsChromeBefore41) {
+                        this.options[k] = this.__newWindowOptionsChromeBefore41[k];
+                    }
+                }
+                if (helper.isFlashInstalled()) {
+                    for(var k in this.__newWindowOptionsFlash) {
+                        this.options[k] = this.__newWindowOptionsFlash[k];
+                    }
                 }
             }
         },
@@ -267,7 +316,7 @@
             var params = '', k;
             for (k in this.options) {
                 if (typeof this.defaultWindowOptions[k] != 'undefined') {
-                    params += (params ? "," : "") + k + "=" + this.options[k];
+                    params += (params ? ',' : '') + k + '=' + this.options[k];
                 }
             }
             return params;
@@ -277,4 +326,4 @@
         return new this(url, options);
     };
     window.SmartPopunder = Popunder;
-})(window);
+})(this);
