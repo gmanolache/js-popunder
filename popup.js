@@ -30,6 +30,10 @@
  * version 2.4.0; May 15, 2015
  * - Make popunder (blur + !newTab) works on firefox, webkit with flash
  * - Remove `smart`, `blurByAlert` options
+ *
+ * version 2.4.1; May 16, 2015
+ * - Fix forgot remove flash after popuped
+ * - Beauty some code
  */
 (function(window){
     'use strict';
@@ -52,10 +56,8 @@
     },
     helper = {
         simulateClick: function(url) {
-            var a = document.createElement('a'),
-                nothing = '',
+            var a = this.createElement('a', {href: url || 'data:text/html,<script>window.close();<\/script>;'}),
                 evt = document.createEvent('MouseEvents');
-            a.href = url || 'data:text/html,<script>window.close();<\/script>;';
             document.body.appendChild(a);
             evt.initMouseEvent('click', true, true, window, 0, 0, 0, 0, 0, true, false, false, true, 0, null);
             a.dispatchEvent(evt);
@@ -86,10 +88,13 @@
                 }
             } catch(err) {}
         },
-        createElement: function(tag, attrs) {
+        createElement: function(tag, attrs, text) {
             var element = document.createElement(tag);
             for(var i in attrs) {
                 element.setAttribute(i, attrs[i]);
+            }
+            if (text) {
+                element.innerHTML = innerHTML;
             }
             return element;
         },
@@ -111,35 +116,34 @@
         isFlashInstalled: function() {
             return !!navigator.mimeTypes['application/x-shockwave-flash'];
         },
+        removeFlashPopunder: function(pop) {
+            var flash = document.getElementById(pop.name + '_flash');
+            if (flash) {
+                flash.parentNode.removeChild(flash);
+            }
+        },
         initFlashPopunder: function(pop) {
             if (!this.isFlashInstalled) return;
 
             var self = this,
-            identifier = pop.name,
-            timer,
+            identifier = pop.name + '_flash',
+            timer, i,
             object = this.createElement('object', {
                 'type': 'application/x-shockwave-flash',
                 'data': Popunder.flashUrl,
                 'name': identifier,
                 'id': identifier,
                 'style': 'position:fixed;visibility:visible;left:0;top:0;width:1px;height:1px;z-index:9999999;'
-            });
-            object.appendChild(this.createElement('param', {
-                'name': 'flashvars',
-                'value': 'fire=' + pop.name + '.fire&name=' + pop.name
-            }));
-            object.appendChild(this.createElement('param', {
-                'name': 'wmode',
-                'value': 'transparent'
-            }));
-            object.appendChild(this.createElement('param', {
-                'name': 'menu',
-                'value': 'false'
-            }));
-            object.appendChild(this.createElement('param', {
-                'name': 'allowscriptaccess',
-                'value': 'always'
-            }));
+            }),
+            params = [
+                {name: 'flashvars', value: 'fire=' + pop.name + '.fire&name=' + pop.name},
+                {name: 'wmode', value: 'transparent'},
+                {name: 'menu', value: 'false'},
+                {name: 'allowscriptaccess', value: 'always'}
+            ];
+            for(i in params) {
+                object.appendChild(this.createElement('param', params[i]));
+            }
             timer = setInterval(function(){
                 if (document.readyState == 'complete') {
                     clearInterval(timer);
@@ -283,6 +287,7 @@
             if (self.options.blur) {
                 helper.blur(w);
             }
+            helper.removeFlashPopunder(self);
         },
         shouldExecute: function() {
             if (browser.chrome && lastPopTime && lastPopTime + this.options.chromeDelay > new Date().getTime()) {
@@ -291,7 +296,7 @@
             return !this.isExecuted();
         },
         isExecuted: function() {
-            return this.executed || !!helper.getCookie(this.name);
+            return this.executed;// || !!helper.getCookie(this.name);
         },
         setExecuted: function() {
             this.executed = true;
