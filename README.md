@@ -9,8 +9,12 @@
 
 ### Change logs
 
+##### Version 2.4.1; May 16, 2015
+ * Fix forgot remove flash after popuped
+ * Beauty some code
+
 ##### Version 2.4.0; May 15, 2015
- * Make popunder (blur + !newTab) works on firefox, webkit with flash
+ * Make popunder (blur + !newTab) **works on Chrome 41+, firefox with flash**
  * Remove `smart`, `blurByAlert` options
 
 ##### Version 2.3.2; Apr 1, 2015
