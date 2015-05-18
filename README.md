@@ -18,6 +18,7 @@
 
 ##### Version 2.4.0; May 15, 2015
  * Make popunder (blur + !newTab) **works on Chrome 41+, firefox with flash**
+ * **Must running in a host/ localhost, not works with file:// **
  * Remove `smart`, `blurByAlert` options
 
 ##### Version 2.3.2; Apr 1, 2015
