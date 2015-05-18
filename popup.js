@@ -34,11 +34,14 @@
  * version 2.4.1; May 16, 2015
  * - Fix forgot remove flash after popuped
  * - Beauty some code
+ *
+ * version 2.4.2; May 18, 2015
+ * - Fix removing flash issue on Chrome.
  */
-(function(window){
+(function(window) {
     'use strict';
 
-    var Popunder = function(url, options){ this.__construct(url, options); },
+    var debug = false,
     counter = 0,
     lastPopTime = 0,
     baseName = 'SmartPopunder',
@@ -86,11 +89,11 @@
                         window.focus();
                     }, 1000);
                 }
-            } catch(err) {}
+            } catch (err) {}
         },
         createElement: function(tag, attrs, text) {
             var element = document.createElement(tag);
-            for(var i in attrs) {
+            for (var i in attrs) {
                 element.setAttribute(i, attrs[i]);
             }
             if (text) {
@@ -117,10 +120,12 @@
             return !!navigator.mimeTypes['application/x-shockwave-flash'];
         },
         removeFlashPopunder: function(pop) {
-            var flash = document.getElementById(pop.name + '_flash');
-            if (flash) {
-                flash.parentNode.removeChild(flash);
-            }
+            setTimeout(function() {
+                var flash = document.getElementById(pop.name + '_flash');
+                if (flash) {
+                    flash.parentNode.removeChild(flash);
+                }
+            }, 1e3);
         },
         initFlashPopunder: function(pop) {
             if (!this.isFlashInstalled) return;
@@ -141,19 +146,19 @@
                 {name: 'menu', value: 'false'},
                 {name: 'allowscriptaccess', value: 'always'}
             ];
-            for(i in params) {
+            for (i in params) {
                 object.appendChild(this.createElement('param', params[i]));
             }
-            timer = setInterval(function(){
+            timer = setInterval(function() {
                 if (document.readyState == 'complete') {
                     clearInterval(timer);
                     document.body.insertBefore(object, document.body.firstChild);
                     object.focus();
-                    self.attachEvent('mousedown', function(obj){
+                    self.attachEvent('mousedown', function(obj) {
                         if (obj.button === 0) {
-                            document.getElementById(identifier).style.width
-                                = document.getElementById(identifier).style.height
-                                = '100%';
+                            document.getElementById(identifier).style.width =
+                                document.getElementById(identifier).style.height =
+                                '100%';
                         }
                     });
                 }
@@ -177,7 +182,7 @@
         },
         mergeObject: function() {
             var obj = {}, i, k;
-            for(i = 0; i < arguments.length; i++) {
+            for (i = 0; i < arguments.length; i++) {
                 for (k in arguments[i]) {
                     obj[k] = arguments[i][k];
                 }
@@ -185,12 +190,12 @@
             return obj;
         },
         getCookie: function(name) {
-            var cookieMatch = document.cookie.match(new RegExp(name+'=[^;]+', 'i'));
+            var cookieMatch = document.cookie.match(new RegExp(name + '=[^;]+', 'i'));
             return cookieMatch ? decodeURIComponent(cookieMatch[0].split('=')[1]) : null;
         },
         setCookie: function(name, value, expires, path) {
             // expires must be number of minutes or instance of Date;
-            if(expires === null || typeof expires == 'undefined') {
+            if (expires === null || typeof expires == 'undefined') {
                 expires = '';
             } else {
                 var date;
@@ -204,6 +209,9 @@
             }
             document.cookie = name + '=' + escape(value) + expires + '; path=' + (path || '/');
         }
+    },
+    Popunder = function(url, options) {
+        this.__construct(url, options);
     };
     Popunder.flashUrl = 'flash/flash.swf';
     Popunder.prototype = {
@@ -225,9 +233,8 @@
             newTab        : true,
             blur          : true,
             chromeDelay   : 500,
-            smart         : false, // for feature, if browsers block event click to window/body
-            beforeOpen    : function(){},
-            afterOpen     : function(){}
+            beforeOpen    : function() {},
+            afterOpen     : function() {}
         },
         __newWindowOptionsFlash: {
             menubar: 0,
@@ -296,6 +303,9 @@
             return !this.isExecuted();
         },
         isExecuted: function() {
+            if(debug) {
+                return this.executed;
+            }
             return this.executed || !!helper.getCookie(this.name);
         },
         setExecuted: function() {
@@ -306,12 +316,12 @@
             this.options = helper.mergeObject(this.defaultWindowOptions, this.defaultPopOptions, options || {});
             if (!this.options.newTab) {
                 if (browser.chrome && browser.version < 41) {
-                    for(var k in this.__newWindowOptionsChromeBefore41) {
+                    for (var k in this.__newWindowOptionsChromeBefore41) {
                         this.options[k] = this.__newWindowOptionsChromeBefore41[k];
                     }
                 }
                 if (helper.isFlashInstalled()) {
-                    for(var k in this.__newWindowOptionsFlash) {
+                    for (var k in this.__newWindowOptionsFlash) {
                         this.options[k] = this.__newWindowOptionsFlash[k];
                     }
                 }

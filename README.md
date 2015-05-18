@@ -9,6 +9,9 @@
 
 ### Change logs
 
+##### Version 2.4.1; May 18, 2015
+ * Fix removing flash issue on Chrome.
+
 ##### Version 2.4.1; May 16, 2015
  * Fix forgot remove flash after popuped
  * Beauty some code
