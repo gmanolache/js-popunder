@@ -7,6 +7,10 @@
 * @author: Phan Thanh Cong <ptcong90@gmail.com>
 * @license: MIT
 
+**Donate author**
+[![Donate](https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=G9ALZSSKUNX3G)
+
+
 ### Change logs
 
 ##### Version 2.4.1; May 18, 2015
