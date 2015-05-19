@@ -13,7 +13,10 @@
 
 ### Change logs
 
-##### Version 2.4.1; May 18, 2015
+##### Version 2.4.3; May 19, 2015
+ * Make popup (blur + newTab) works on Firefox 38+, Chrome 41+, IE 11
+
+##### Version 2.4.2; May 18, 2015
  * Fix removing flash issue on Chrome.
 
 ##### Version 2.4.1; May 16, 2015

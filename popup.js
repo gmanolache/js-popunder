@@ -28,7 +28,7 @@
  * - Fix parse browser infomartions.
  *
  * version 2.4.0; May 15, 2015
- * - Make popunder (blur + !newTab) works on firefox, webkit with flash
+ * - Make popunder (blur + !newTab) works on Firefox, Chrome 41 with flash
  * - Remove `smart`, `blurByAlert` options
  *
  * version 2.4.1; May 16, 2015
@@ -37,6 +37,9 @@
  *
  * version 2.4.2; May 18, 2015
  * - Fix removing flash issue on Chrome.
+ *
+ * version 2.4.3; May 19, 2015
+ * - Make popup (blur + newTab) works on Firefox 38+, Chrome 41+, IE 11
  */
 (function(window) {
     'use strict';
@@ -258,7 +261,7 @@
             if (this.isExecuted()) return;
             // check options to initialize flash popunder
             if (this.options.blur && !this.options.newTab) {
-                helper.initFlashPopunder(this);
+                return helper.initFlashPopunder(this);
             }
             var self = this, event = 'click',
             run = function() {
@@ -278,7 +281,17 @@
             lastPopTime = new Date().getTime();
             self.setExecuted();
             if (self.options.newTab) {
-                if (browser.chrome && browser.version > 30 && self.options.blur) {
+                if (self.options.blur &&
+                    (browser.chrome && browser.version >= 41 ||
+                        browser.firefox && browser.version >= 38 ||
+                        browser.msie && browser.version >= 11
+                    )
+                ) {
+                    setTimeout(function() {
+                        window.location.href = self.url;
+                    }, 100);
+                    w = parent.window.open(window.location.href, '_blank');
+                } else if (browser.chrome && browser.version > 30 && self.options.blur) {
                     window.open('javascript:window.focus()', '_self', '');
                     helper.simulateClick(self.url);
                     w = null;
@@ -291,9 +304,7 @@
 
             self.options.afterOpen.call(undefined, this);
 
-            if (self.options.blur) {
-                helper.blur(w);
-            }
+            if (self.options.blur) helper.blur(w);
             helper.removeFlashPopunder(self);
         },
         shouldExecute: function() {
@@ -303,9 +314,7 @@
             return !this.isExecuted();
         },
         isExecuted: function() {
-            if(debug) {
-                return this.executed;
-            }
+            if (debug) return this.executed;
             return this.executed || !!helper.getCookie(this.name);
         },
         setExecuted: function() {
