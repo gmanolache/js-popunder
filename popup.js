@@ -40,6 +40,10 @@
  *
  * version 2.4.3; May 19, 2015
  * - Make popup (blur + newTab) works on Firefox 38+, Chrome 41+, IE 11
+ *
+ * version 2.4.4; May 20, 2015
+ * - Make popunder works on Mobile (tested with iOS)
+ * - Fix issue with multiple (newTab + blur) pops (Firefox 38+, Chrome 43)
  */
 (function(window) {
     'use strict';
@@ -51,6 +55,9 @@
     parent = top != self ? top : self,
     userAgent = navigator.userAgent.toLowerCase(),
     browser = {
+        win: /windows/.test(userAgent),
+        mac: /macintosh/.test(userAgent),
+        mobile: /iphone|ipad|android/.test(userAgent),
         webkit: /webkit/.test(userAgent),
         mozilla: /mozilla/.test(userAgent) && !/(compatible|webkit)/.test(userAgent),
         chrome: /chrome/.test(userAgent),
@@ -70,6 +77,8 @@
             a.parentNode.removeChild(a);
         },
         blur:  function(popunder) {
+            if (browser.mobile) return;
+
             try {
                 popunder.blur();
                 popunder.opener.window.focus();
@@ -131,8 +140,6 @@
             }, 1e3);
         },
         initFlashPopunder: function(pop) {
-            if (!this.isFlashInstalled) return;
-
             var self = this,
             identifier = pop.name + '_flash',
             timer, i,
@@ -213,10 +220,11 @@
             document.cookie = name + '=' + escape(value) + expires + '; path=' + (path || '/');
         }
     },
+    popUrls = [],
     Popunder = function(url, options) {
         this.__construct(url, options);
     };
-    Popunder.flashUrl = 'flash/flash.swf';
+    Popunder.flashUrl = 'flash/flash.swf?v='+Math.random();
     Popunder.prototype = {
         defaultWindowOptions: {
             width      : window.screen.width,
@@ -240,8 +248,8 @@
             afterOpen     : function() {}
         },
         __newWindowOptionsFlash: {
-            menubar: 0,
-            toolbar: 0
+            menubar: 0, // for chrome
+            toolbar: 0 // for firefox
         },
         __newWindowOptionsChromeBefore41: {
             scrollbars : 1
@@ -255,21 +263,23 @@
             this.setOptions(options);
             this.register();
 
+            if (!this.isExecuted()) {
+                popUrls.push(this.url);
+            }
             window[this.name] = this;
         },
         register: function() {
             if (this.isExecuted()) return;
             // check options to initialize flash popunder
-            if (this.options.blur && !this.options.newTab) {
+            if (this.options.blur && !this.options.newTab && helper.isFlashInstalled()) {
                 return helper.initFlashPopunder(this);
             }
             var self = this, event = 'click',
             run = function() {
-                if (self.shouldExecute()) {
-                    self.fire();
-                    helper.detachEvent(event, run, window);
-                    helper.detachEvent(event, run, document);
-                }
+                if (!self.shouldExecute()) return;
+                self.fire();
+                helper.detachEvent(event, run, window);
+                helper.detachEvent(event, run, document);
             };
             helper.attachEvent(event, run, window);
             helper.attachEvent(event, run, document);
@@ -282,15 +292,21 @@
             self.setExecuted();
             if (self.options.newTab) {
                 if (self.options.blur &&
-                    (browser.chrome && browser.version >= 41 ||
+                    (browser.mobile ||
+                        browser.chrome && browser.version >= 41 ||
                         browser.firefox && browser.version >= 38 ||
                         browser.msie && browser.version >= 11
                     )
                 ) {
-                    setTimeout(function() {
-                        window.location.href = self.url;
-                    }, 100);
-                    w = parent.window.open(window.location.href, '_blank');
+                    if (popUrls.length == 1 || browser.chrome) {
+                        w = parent.window.open(window.location.href, '_blank');
+                        var url = popUrls.shift();
+                        setTimeout(function() {
+                            window.location.href = url;
+                        }, 100);
+                    } else {
+                        w = parent.window.open(popUrls.shift(), '_blank');
+                    }
                 } else if (browser.chrome && browser.version > 30 && self.options.blur) {
                     window.open('javascript:window.focus()', '_self', '');
                     helper.simulateClick(self.url);
