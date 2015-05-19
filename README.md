@@ -14,7 +14,7 @@
 ### Change logs
 ##### Version 2.4.4; May 20, 2015
  * Make popunder works on Mobile (tested with iOS)
- * Fix issue with multiple (newTab + blur) pops (Firefox 38+, Chrom
+ * Fix issue with multiple (newTab + blur) pops (Firefox 38+, Chrom 43)
 
 ##### Version 2.4.3; May 19, 2015
  * Make popup (blur + newTab) works on Firefox 38+, Chrome 41+, IE 11
